@@ -93,8 +93,8 @@
 						</execution>
 					</executions>
 					<configuration>
-						<tag>${project.version}</tag>
-						<repository>shared/${project.build.finalName}</repository>
+						<tag>1.0</tag>
+						<repository>snakebyte/${project.build.finalName}</repository>
 						<buildArgs>
 							<appname>${project.build.finalName}</appname>
 						</buildArgs>

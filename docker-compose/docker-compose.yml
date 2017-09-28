@@ -2,65 +2,19 @@ version: '3'
 
 services:
 
-#  orga.gateway:
-#     container_name: orga.gateway
-#     image: shared/gateway:${TAG}
-#     volumes: 
-#       - "./orgA/gateway:/etc/gateway"
-#     ports:
-#       - "8080:8080"
-
-  orga.workflow:
-     container_name: orga.workflow
-     image: shared/workflow:${TAG}
+  auth-server:
+     container_name: auth-server
+     image: snakebyte/auth-server:1.0
      volumes: 
-       - "./orgA/workflow:/etc/workflow"
-     environment:
-      APP_OPTS: "--spring.profiles.active=dev"
-     ports:
-       - "8080:8080"
-       
-  orga.bcma:
-     container_name: orga.bcma
-     image: shared/bcma:${TAG}
-     volumes: 
-       - "./orgA/bcma:/etc/bcma"
-     environment:
-      APP_OPTS: "--spring.profiles.active=dev"
-
-
-  orgb.workflow:
-     container_name: orgb.workflow
-     image: shared/workflow:${TAG}
-     volumes: 
-       - "./orgB/workflow:/etc/workflow"
-     environment:
-      APP_OPTS: "--spring.profiles.active=dev"
+       - "./auth-server:/etc/auth-server"
      ports:
        - "8081:8080"
        
-  orgb.bcma:
-     container_name: orgb.bcma
-     image: shared/bcma:${TAG}
-     environment:
-      APP_OPTS: "--spring.profiles.active=dev"
+  resource:
+     container_name: resource
+     image: snakebyte/resource:1.0
      volumes: 
-       - "./orgB/bcma:/etc/bcma"
-       
-  dashboard:
-     container_name: dashboard
-     image: shared/dashboard:${TAG}
-     environment:
-      APP_OPTS: "--spring.profiles.active=dev"
-     volumes: 
-       - "./dashboard:/etc/dashboard"
+       - "./resource:/etc/resource"
      ports:
-       - "8090:8080"
-         
-  activemq:
-    container_name: activemq
-    image: webcenter/activemq:latest
-    environment:
-      - ACTIVEMQ_STATIC_QUEUE=orgA;orgB
-    ports:
-      - "8161:8161"
+       - "8080:8080"
+
