@@ -1,0 +1,7 @@
+# Application name
+spring.application.name: organization
+
+#Disable jmx
+spring.jmx.enabled: false
+
+
