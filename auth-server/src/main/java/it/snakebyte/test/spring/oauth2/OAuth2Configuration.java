@@ -1,6 +1,7 @@
 package it.snakebyte.test.spring.oauth2;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,78 +31,57 @@ public class OAuth2Configuration extends AuthorizationServerConfigurerAdapter {
     private int refreshTokenValiditySeconds;
 
     @Autowired
+    @Qualifier("authenticationManagerBean")
     private AuthenticationManager authenticationManager;
 
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-          endpoints
-                .authenticationManager(this.authenticationManager)
-                .tokenServices(tokenServices())
-                .tokenStore(tokenStore())
-                .accessTokenConverter(accessTokenConverter());
+        endpoints.tokenStore(tokenStore())
+                 .accessTokenConverter(accessTokenConverter())
+                 .authenticationManager(authenticationManager);
     }
 
     @Override
     public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
-        oauthServer.tokenKeyAccess("isAnonymous() || hasAuthority('ROLE_TRUSTED_CLIENT')")
-                .checkTokenAccess("hasAuthority('ROLE_TRUSTED_CLIENT')");
+        oauthServer.tokenKeyAccess("permitAll()")
+                .checkTokenAccess("isAuthenticated()");
     }
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-        clients.inMemory()
-                .withClient("normal-app")
-                    .authorizedGrantTypes("authorization_code", "implicit")
-                    .authorities("ROLE_CLIENT")
-                    .scopes("read", "write")
-                    .resourceIds(resourceId)
-                    .accessTokenValiditySeconds(accessTokenValiditySeconds)
-                    .refreshTokenValiditySeconds(refreshTokenValiditySeconds)
-                .and()
-                .withClient("trusted-app")
-                    .authorizedGrantTypes("client_credentials", "password", "refresh_token")
-                    .authorities("ROLE_TRUSTED_CLIENT")
-                    .scopes("read", "write")
-                    .resourceIds(resourceId)
-                    .accessTokenValiditySeconds(accessTokenValiditySeconds)
-                    .refreshTokenValiditySeconds(refreshTokenValiditySeconds)
-                    .secret("secret")
-                .and()
-                .withClient("register-app")
-                    .authorizedGrantTypes("client_credentials")
-                    .authorities("ROLE_REGISTER")
-                    .scopes("read")
-                    .resourceIds(resourceId)
-                    .secret("secret")
-                .and()
-                .withClient("my-client-with-registered-redirect")
-                    .authorizedGrantTypes("authorization_code")
-                    .authorities("ROLE_CLIENT")
-                    .scopes("read", "trust")
-                    .resourceIds("oauth2-resource")
-                    .redirectUris("http://anywhere?key=value");
+        clients.inMemory()                
+                .withClient("sampleClientId")
+                  .authorizedGrantTypes("client_credentials")
+                  .scopes("read")
+                  .secret("secret")
+                  .authorities("SAMPLE")
+                  .and()
+                  .withClient("clientIdPassword")
+                  .secret("secret")
+                  .authorizedGrantTypes(
+                    "password","authorization_code", "refresh_token")
+                  .scopes("read");
     }
-
+ 
     @Bean
     public TokenStore tokenStore() {
         return new JwtTokenStore(accessTokenConverter());
     }
-
+ 
     @Bean
     public JwtAccessTokenConverter accessTokenConverter() {
         JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
-
+        converter.setSigningKey("123");
         return converter;
     }
-
+ 
     @Bean
     @Primary
     public DefaultTokenServices tokenServices() {
         DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
         defaultTokenServices.setTokenStore(tokenStore());
         defaultTokenServices.setSupportRefreshToken(true);
-        defaultTokenServices.setTokenEnhancer(accessTokenConverter());
         return defaultTokenServices;
     }
 }
