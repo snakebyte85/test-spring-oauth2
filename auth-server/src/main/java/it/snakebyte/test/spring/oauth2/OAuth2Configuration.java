@@ -1,18 +1,20 @@
 package it.snakebyte.test.spring.oauth2;
 
+import javax.sql.DataSource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
-import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
+import org.springframework.security.oauth2.provider.approval.ApprovalStore;
+import org.springframework.security.oauth2.provider.approval.JdbcApprovalStore;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
@@ -21,14 +23,14 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 @EnableAuthorizationServer
 public class OAuth2Configuration extends AuthorizationServerConfigurerAdapter {
 
-    @Value("${security.oauth2.resource.id:RISORSA}")
-    private String resourceId;
-
-    @Value("${access_token.validity_period:3600}")
+    @Value("${access_token.validity_period:10}")
     private int accessTokenValiditySeconds;
 
-    @Value("${refresh_token.validity_period:10000}")
+    @Value("${refresh_token.validity_period:3600}")
     private int refreshTokenValiditySeconds;
+
+    @Autowired
+    private DataSource dataSource;
 
     @Autowired
     @Qualifier("authenticationManagerBean")
@@ -37,9 +39,11 @@ public class OAuth2Configuration extends AuthorizationServerConfigurerAdapter {
 
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-        endpoints.tokenStore(tokenStore())
-                 .accessTokenConverter(accessTokenConverter())
-                 .authenticationManager(authenticationManager);
+        endpoints.approvalStore(approvalStore())
+                    .tokenStore(tokenStore())
+                    .authenticationManager(authenticationManager)
+                    .reuseRefreshTokens(true)
+                    .accessTokenConverter(accessTokenConverter());
     }
 
     @Override
@@ -50,38 +54,50 @@ public class OAuth2Configuration extends AuthorizationServerConfigurerAdapter {
 
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-        clients.inMemory()                
-                .withClient("sampleClientId")
+
+        clients.inMemory()
+                .withClient("client1")
                   .authorizedGrantTypes("client_credentials")
+                  .secret("secret")
                   .scopes("read")
-                  .secret("secret")
                   .authorities("SAMPLE")
-                  .and()
-                  .withClient("clientIdPassword")
+                  .accessTokenValiditySeconds(accessTokenValiditySeconds)
+                  .refreshTokenValiditySeconds(refreshTokenValiditySeconds)
+                  .resourceIds("test")
+                .and()
+                .withClient("client2")
+                .authorizedGrantTypes(
+                        "password", "refresh_token")
                   .secret("secret")
-                  .authorizedGrantTypes(
-                    "password","authorization_code", "refresh_token")
-                  .scopes("read");
+                  .scopes("read", "write")
+                  .accessTokenValiditySeconds(accessTokenValiditySeconds)
+                  .refreshTokenValiditySeconds(refreshTokenValiditySeconds)
+                .and()
+                .withClient("client3")
+                .authorizedGrantTypes(
+                        "authorization_code","refresh_token")
+                  .scopes("read", "write")
+                  .redirectUris("http://localhost:9000")
+                  .autoApprove(true)
+                  .accessTokenValiditySeconds(accessTokenValiditySeconds)
+                  .refreshTokenValiditySeconds(refreshTokenValiditySeconds);
     }
- 
+
     @Bean
     public TokenStore tokenStore() {
-        return new JwtTokenStore(accessTokenConverter());
+        JwtTokenStore tokenStore = new MyJwtTokenStore(accessTokenConverter(), approvalStore());
+        return tokenStore;
     }
- 
+
+    @Bean
+    public ApprovalStore approvalStore() {
+        return new JdbcApprovalStore(dataSource);
+    }
+
     @Bean
     public JwtAccessTokenConverter accessTokenConverter() {
         JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
         converter.setSigningKey("123");
         return converter;
-    }
- 
-    @Bean
-    @Primary
-    public DefaultTokenServices tokenServices() {
-        DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
-        defaultTokenServices.setTokenStore(tokenStore());
-        defaultTokenServices.setSupportRefreshToken(true);
-        return defaultTokenServices;
     }
 }

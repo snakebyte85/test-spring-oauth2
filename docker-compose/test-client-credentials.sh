@@ -1,6 +1,10 @@
 #!/usr/bin/bash
 
-ACCESS_TOKEN=`curl -s sampleClientId:secret@localhost:8081/oauth/token -d "grant_type=client_credentials" | jq -r ".access_token"`
+OUTPUT=`curl -s client1:secret@localhost:8081/oauth/token -d "grant_type=client_credentials"`
+
+ACCESS_TOKEN=`echo "$OUTPUT" | jq -r ".access_token"`
+
+echo "Output is: $OUTPUT"
 
 echo "Access Token is: $ACCESS_TOKEN"
 

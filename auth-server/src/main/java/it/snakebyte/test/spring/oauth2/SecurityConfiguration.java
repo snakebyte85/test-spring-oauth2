@@ -3,7 +3,6 @@ package it.snakebyte.test.spring.oauth2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -15,23 +14,32 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @EnableWebSecurity
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
-    
+
+    @Override
     @Autowired
-    public void globalUserDetails(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication().withUser("user").password("password").roles("USER").and().withUser("admin")
-                .password("password").roles("USER", "ADMIN");
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.inMemoryAuthentication().
+                withUser("user")
+                    .password("password").roles("USER")
+                .and()
+                .withUser("admin")
+                    .password("password").roles("USER", "ADMIN", "ACTUATOR");
     }
-    
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
      http
         .authorizeRequests()
-            .antMatchers(HttpMethod.OPTIONS).permitAll()
+            .antMatchers("/health").permitAll()
             .anyRequest().authenticated()
-            .and().httpBasic()
-            .and().csrf().disable();
+        .and()
+        .httpBasic()
+        .and()
+        .csrf().disable()
+        .headers().frameOptions().sameOrigin();
+
     }
-    
+
     @Override
     @Bean
     public AuthenticationManager authenticationManagerBean() throws Exception {

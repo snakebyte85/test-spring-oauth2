@@ -1,7 +1,10 @@
 # Application name
-spring.application.name: organization
+spring.application.name: auth-server
 
 #Disable jmx
 spring.jmx.enabled: false
 
-
+#Enable h2 console
+spring.h2.console:
+  enabled: true
+  settings.web-allow-others: true

@@ -1,5 +1,5 @@
 # Application name
-spring.application.name: organization
+spring.application.name: resource
 
 #Disable jmx
 spring.jmx.enabled: false
