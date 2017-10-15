@@ -23,7 +23,7 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 @EnableAuthorizationServer
 public class OAuth2Configuration extends AuthorizationServerConfigurerAdapter {
 
-    @Value("${access_token.validity_period:10}")
+    @Value("${access_token.validity_period:30}")
     private int accessTokenValiditySeconds;
 
     @Value("${refresh_token.validity_period:3600}")
@@ -63,7 +63,7 @@ public class OAuth2Configuration extends AuthorizationServerConfigurerAdapter {
                   .authorities("SAMPLE")
                   .accessTokenValiditySeconds(accessTokenValiditySeconds)
                   .refreshTokenValiditySeconds(refreshTokenValiditySeconds)
-                  .resourceIds("test")
+                  .resourceIds("resource")
                 .and()
                 .withClient("client2")
                 .authorizedGrantTypes(

@@ -22,11 +22,10 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 
 @Configuration
 @EnableResourceServer
-@EnableOAuth2Client
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 @EnableWebSecurity
+@EnableOAuth2Client
 public class OAuth2Configuration extends ResourceServerConfigurerAdapter {
-
 
     @Autowired
     private MyFilter myFilter;
@@ -36,7 +35,7 @@ public class OAuth2Configuration extends ResourceServerConfigurerAdapter {
 
     @Override
     public void configure(ResourceServerSecurityConfigurer config) {
-        config.tokenStore(tokenStore()).resourceId("resource");
+        config.tokenStore(tokenStore()).resourceId("sub-resource");
     }
 
     @Bean
@@ -85,5 +84,4 @@ public class OAuth2Configuration extends ResourceServerConfigurerAdapter {
         registrationBean.setOrder(Integer.MAX_VALUE);
         return registrationBean;
     }
-
 }

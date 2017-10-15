@@ -28,6 +28,7 @@
 	<modules>
 		<module>auth-server</module>
 		<module>resource</module>
+		<module>sub-resource</module>
 	</modules>
 
 	<dependencyManagement>
